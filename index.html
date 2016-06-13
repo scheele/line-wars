@@ -54,12 +54,27 @@
     }
 
     function update() {
+        var angVel = 0.04; // Rads per update.
+        var speed = 85;
 
-        /*
-         1. Draw line from last pos to current.
-         2. Make into sprite.
-         3. Add sprite to group.
-         */
+        updateBody();
+
+        var angleToPointer = game.physics.arcade.angleToPointer(p1_head);
+        directionAngle = updateDirection(directionAngle, angleToPointer, angVel);
+
+        p1_head.body.velocity.x = speed * Math.cos(directionAngle);
+        p1_head.body.velocity.y = speed * Math.sin(directionAngle);
+
+        graphics.destroy();
+    }
+
+    /**
+     * 1. Draw line from last pos to current.
+     * 2. Draw a circle at the end of the line to avoid edges.
+     * 2. Make into sprite.
+     * 3. Add sprite to group.
+     */
+    function updateBody(){
 
         graphics = game.add.graphics(0, 0);
         graphics.beginFill(0xFF3300);
@@ -76,37 +91,31 @@
 
         lastX = p1_head.x;
         lastY = p1_head.y;
+    }
 
+    /**
+     * Takes an angle and returns it closer to the target angle.
+     * @param currentAngle
+     * @param targetAngle
+     * @param angularVelocity
+     * @returns {*}
+     */
+    function updateDirection(currentAngle, targetAngle, angularVelocity) {
+        targetAngle = game.math.normalizeAngle(targetAngle);
 
-        //console.log(game.physics.arcade.angleToPointer(p1_head));
+        var difference = targetAngle - currentAngle;
 
-        var angleToPointer = game.physics.arcade.angleToPointer(p1_head);
-        angleToPointer = game.math.normalizeAngle(angleToPointer);
-
-
-        var difference = angleToPointer - directionAngle;
-        // If the difference between the angles is larger than zero then direction angle needs to increase.
-        // If the difference is greater than Pi, then it is closer to decrease direction angle.
-        // If the difference is
-        var angVel = 0.04;
         if(0 < difference ) {
-            if ( difference < Math.PI ) directionAngle += angVel;
-            else directionAngle -= angVel;
+            if ( difference < Math.PI ) currentAngle += angularVelocity;
+            else currentAngle -= angularVelocity;
         } else {
-            if ( difference < -Math.PI ) directionAngle += angVel;
-            else directionAngle -= angVel;
+            if ( difference < -Math.PI ) currentAngle += angularVelocity;
+            else currentAngle -= angularVelocity;
         }
 
-        directionAngle = game.math.wrapAngle(directionAngle, true);
-        directionAngle = game.math.normalizeAngle(directionAngle);
-
-        var speed = 85;
-        p1_head.body.velocity.x = speed * Math.cos(directionAngle);
-        p1_head.body.velocity.y = speed * Math.sin(directionAngle);
-        game.debug.text(angleToPointer+" : "+directionAngle, 30, 30);
-
-        //game.physics.arcade.accelerateToPointer(p1_head,Phaser.Input.activePointer, 200,200,200);
-        graphics.destroy();
+        currentAngle = game.math.wrapAngle(currentAngle, true);
+        currentAngle = game.math.normalizeAngle(currentAngle);
+        return currentAngle;
     }
 
 
