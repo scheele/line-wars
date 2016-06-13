@@ -80,16 +80,29 @@
 
         //console.log(game.physics.arcade.angleToPointer(p1_head));
 
-        var angleToPointer = game.physics.arcade.angleToPointer(p1_head)+Math.PI;
+        var angleToPointer = game.physics.arcade.angleToPointer(p1_head);
+        angleToPointer = game.math.normalizeAngle(angleToPointer);
 
-        if(Math.abs(angleToPointer - directionAngle) < Math.PI){
-            directionAngle = Math.min(directionAngle+0.05,angleToPointer);
+
+        var difference = angleToPointer - directionAngle;
+        // If the difference between the angles is larger than zero then direction angle needs to increase.
+        // If the difference is greater than Pi, then it is closer to decrease direction angle.
+        // If the difference is
+        var angVel = 0.04;
+        if(0 < difference ) {
+            if ( difference < Math.PI ) directionAngle += angVel;
+            else directionAngle -= angVel;
         } else {
-            directionAngle = Math.max(directionAngle-0.05,angleToPointer);
+            if ( difference < -Math.PI ) directionAngle += angVel;
+            else directionAngle -= angVel;
         }
 
-        p1_head.body.velocity.x = 100 * Math.cos(directionAngle);
-        p1_head.body.velocity.y = 100 * Math.sin(directionAngle);
+        directionAngle = game.math.wrapAngle(directionAngle, true);
+        directionAngle = game.math.normalizeAngle(directionAngle);
+
+        var speed = 85;
+        p1_head.body.velocity.x = speed * Math.cos(directionAngle);
+        p1_head.body.velocity.y = speed * Math.sin(directionAngle);
         game.debug.text(angleToPointer+" : "+directionAngle, 30, 30);
 
         //game.physics.arcade.accelerateToPointer(p1_head,Phaser.Input.activePointer, 200,200,200);
