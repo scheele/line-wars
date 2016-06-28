@@ -13,22 +13,46 @@
 <body>
 
 <script type="text/javascript">
-    var game = new Phaser.Game(800, 600, Phaser.AUTO, '', { preload: preload, create: create, update: update});
+    var SCREEN_WIDTH = 800;
+    var SCREEN_HEIGHT = 600;
+    var game = new Phaser.Game(SCREEN_WIDTH, SCREEN_HEIGHT, Phaser.AUTO, '', { preload: preload, create: create, update: update});
     function preload() {
         game.load.image('phaser', 'phaser.png');
     }
 
-    var graphics;
 
-    var p1_head;
-    var p1_body;
+    var head;
+    var tail;
 
     var lastX;
     var lastY;
 
     var directionAngle;
 
+    var worldBounds;
+
     function create() {
+        worldBounds = game.add.group();
+
+        var thickness = 10;
+        
+        var graphics = game.add.graphics(0, 0);
+        graphics.beginFill(0x0000FF);
+        graphics.drawRect( 0, 0, SCREEN_WIDTH, thickness );
+        worldBounds.create( 0, 0, graphics.generateTexture() );
+        worldBounds.create( 0, SCREEN_HEIGHT-thickness, graphics.generateTexture() );
+        graphics.destroy();
+
+        graphics.beginFill(0x0000FF);
+        graphics.drawRect( 0, 0, thickness, SCREEN_HEIGHT);
+        worldBounds.create( 0, 0, graphics.generateTexture() );
+        worldBounds.create( SCREEN_WIDTH-thickness, 0, graphics.generateTexture() );
+        graphics.destroy();
+
+        game.physics.arcade.enable( worldBounds );
+
+
+
         graphics = game.add.graphics(0, 0);
 
         graphics.beginFill(0xFF3300);
@@ -37,19 +61,19 @@
         graphics.drawCircle(0,0,15);
 
         //  Then generate a texture from it and apply the texture to the sprite
-        p1_head = game.add.sprite(400, 300, graphics.generateTexture());
-        p1_head.anchor.set(0.5);
-        game.physics.arcade.enable(p1_head);
-        p1_head.body.collideWorldBounds = true;
+        head = game.add.sprite(400, 300, graphics.generateTexture());
 
+        graphics.destroy();
 
+        head.anchor.set(0.5);
+        game.physics.arcade.enable(head);
 
-        p1_body = game.add.group();
-
-
+        tail = game.add.group();
 
         //  And destroy the original graphics object
-        graphics.destroy();
+
+
+
 
         directionAngle = 0;
 
@@ -61,13 +85,20 @@
 
         updateBody();
 
-        var angleToPointer = game.physics.arcade.angleToPointer(p1_head);
+        var angleToPointer = game.physics.arcade.angleToPointer(head);
         directionAngle = updateDirection(directionAngle, angleToPointer, angVel);
 
-        p1_head.body.velocity.x = speed * Math.cos(directionAngle);
-        p1_head.body.velocity.y = speed * Math.sin(directionAngle);
+        head.body.velocity.x = speed * Math.cos(directionAngle);
+        head.body.velocity.y = speed * Math.sin(directionAngle);
 
-        game.physics.arcade.collide(p1_head,p1_body);
+        if(game.physics.arcade.collide(head,tail) || game.physics.arcade.collide(head,worldBounds)){
+            lastX = undefined;
+            lastY = undefined;
+            tail.destroy();
+            head.destroy();
+            worldBounds.destroy();
+            create();
+        }
 
     }
 
@@ -79,24 +110,24 @@
      */
     function updateBody(){
 
-        graphics = game.add.graphics(0, 0);
+        var graphics = game.add.graphics(0, 0);
         graphics.beginFill(0xFFD900);
         graphics.lineStyle(5, 0xFFD900, 1);
         graphics.moveTo(lastX,lastY);
-        graphics.lineTo(p1_head.x,p1_head.y);
-        graphics.drawCircle(p1_head.x, p1_head.y, 2.5);
+        graphics.lineTo(head.x,head.y);
+        graphics.drawCircle(head.x, head.y, 2.5);
         graphics.endFill();
 
-        var sprite = game.add.sprite(p1_head.x, p1_head.y, graphics.generateTexture());
+        var sprite = game.add.sprite(head.x, head.y, graphics.generateTexture());
         graphics.destroy();
 
         game.physics.arcade.enable(sprite);
         sprite.body.immovable = true;
         sprite.anchor.set(0.5);
-        p1_body.add(sprite);
+        tail.add(sprite);
 
-        lastX = p1_head.x;
-        lastY = p1_head.y;
+        lastX = head.x;
+        lastY = head.y;
     }
 
     /**
